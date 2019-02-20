@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Melelo143785</string>
+    <string name="title_activity_write_nfc">WriteNFCActivity</string>
 </resources>
