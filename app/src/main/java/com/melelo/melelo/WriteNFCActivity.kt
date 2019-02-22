@@ -33,11 +33,11 @@ class WriteNFCActivity : AppCompatActivity(), NfcAdapter.CreateNdefMessageCallba
         requestPermission(Manifest.permission.SEND_SMS,10003)
 
         fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+            Snackbar.make(view, "Aproach an NFC TAG", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show()
             nfcAdapter = NfcAdapter.getDefaultAdapter(this)
             if (nfcAdapter == null) {
-                Log.e("NFC","Might is null")
+                Log.e("NFC","Might be null")
                 Toast.makeText(this, "NFC is not available", Toast.LENGTH_LONG).show()
             }else{
                 nfcAdapter?.let{
