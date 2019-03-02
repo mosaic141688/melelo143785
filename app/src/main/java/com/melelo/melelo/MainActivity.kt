@@ -77,7 +77,7 @@ class MainActivity : AppCompatActivity(),LocationListener {
         requestPermission(android.Manifest.permission.ACCESS_FINE_LOCATION, MY_PERMISSIONS_REQUEST_LOCATION)
         requestPermission(android.Manifest.permission.CALL_PHONE, MY_PERMISSIONS_REQUEST_CALL)
 
-        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager // Getting location service instance
         val enabled = locationManager
             .isProviderEnabled(LocationManager.GPS_PROVIDER)
 
@@ -96,7 +96,7 @@ class MainActivity : AppCompatActivity(),LocationListener {
             location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,100L,100F,this)
             location?.let {
-               // makeACall()
+                makeACall()
                 sendAnSMS()
             }
         }catch (e:SecurityException ){
@@ -113,6 +113,7 @@ class MainActivity : AppCompatActivity(),LocationListener {
         val telecomManager = getSystemService(Context.TELECOM_SERVICE) as TelecomManager
         try {
             telecomManager.placeCall(uri, extras)
+           // telecomManager.showInCallScreen(false)
         }catch (e:SecurityException){
             Toast.makeText(this,"Need Call Permission to make call",Toast.LENGTH_LONG).show()
         }
