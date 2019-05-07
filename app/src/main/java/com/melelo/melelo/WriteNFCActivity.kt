@@ -3,6 +3,7 @@ package com.melelo.melelo
 import android.Manifest
 import android.app.Activity
 import android.app.PendingIntent
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
@@ -11,26 +12,140 @@ import android.nfc.NdefRecord.createMime
 import android.nfc.tech.Ndef
 import android.nfc.tech.NdefFormatable
 import android.os.Bundle
+import android.preference.PreferenceManager
 import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
+import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
 import android.util.Log
+import android.view.View
+import android.widget.EditText
 import android.widget.Toast
 
 import kotlinx.android.synthetic.main.activity_write_nfc.*
+import org.json.JSONArray
 import java.io.IOException
+import java.util.prefs.PreferenceChangeListener
 
-class WriteNFCActivity : AppCompatActivity(), NfcAdapter.CreateNdefMessageCallback {
+class WriteNFCActivity : AppCompatActivity(), NfcAdapter.CreateNdefMessageCallback, DeleteContact {
 
     private var nfcAdapter: NfcAdapter? = null
+
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var viewAdapter: RecyclerView.Adapter<*>
+    private lateinit var viewManager: RecyclerView.LayoutManager
+    val myDataset = arrayListOf<Contact>()
+
+
+    override fun onDelete(possition: Int) {
+        myDataset.removeAt(possition)
+        viewAdapter.notifyDataSetChanged()
+
+        val arr =JSONArray()
+
+        for(num in myDataset){
+            arr.put(num.number)
+        }
+        PreferenceManager.getDefaultSharedPreferences(this)
+            .edit()
+            .putString("text_numbers",arr.toString())
+            .apply()
+
+
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_write_nfc)
         setSupportActionBar(toolbar)
 
+        val arrString = PreferenceManager.getDefaultSharedPreferences(this)
+            .getString("text_numbers","[]")
+
+        val arr =JSONArray(arrString)
+
+        PreferenceChangeListener{
+            Log.e("Preference Change",it.key)
+        }
+
+
+
+        call_number_tv.text = PreferenceManager.getDefaultSharedPreferences(this).getString("call_number","")
+
         requestPermission(Manifest.permission.SEND_SMS,10003)
+
+
+        viewManager = LinearLayoutManager(this)
+        viewAdapter = MyAdatpter(myDataset,this)
+
+        edit_call_number_btn.setOnClickListener {
+            val builder:AlertDialog.Builder = let {
+                AlertDialog.Builder(it)
+            }
+
+            val ly: View = layoutInflater.inflate(R.layout.call_number_dialog_ly,null)
+
+            builder.setView(ly)
+                .setPositiveButton("SAVE",  DialogInterface.OnClickListener { dialog, id ->
+                    val call_number =  ly.findViewById<EditText>(R.id.call_number_edit_text).text.toString()
+                    call_number_tv.text = call_number
+                    PreferenceManager.getDefaultSharedPreferences(this)
+                        .edit()
+                        .putString("call_number",call_number)
+                        .apply()
+                })
+                .setTitle("Enter Number to Call")
+                .create()
+                .show()
+        }
+
+        for (i in 0..arr.length()-1){
+            myDataset.add(Contact(arr.getString(i)!!,false,false))
+        }
+
+
+        add_text_number_btn.setOnClickListener {
+            val builder:AlertDialog.Builder = let {
+                AlertDialog.Builder(it)
+            }
+
+            val ly: View = layoutInflater.inflate(R.layout.call_number_dialog_ly,null)
+
+            builder.setView(ly)
+                .setPositiveButton("SAVE",  DialogInterface.OnClickListener { dialog, id ->
+                    val number =  ly.findViewById<EditText>(R.id.call_number_edit_text).text.toString()
+                    myDataset.add(Contact(number,false,false))
+                    viewAdapter.notifyDataSetChanged()
+                    val arr = JSONArray()
+                    for(num in myDataset){
+                        arr.put(num.number)
+                    }
+                    PreferenceManager.getDefaultSharedPreferences(this)
+                        .edit()
+                        .putString("text_numbers",arr.toString())
+                        .apply()
+                })
+                .setTitle("Add Another Number")
+                .create()
+                .show()
+        }
+
+        recyclerView = findViewById<RecyclerView>(R.id.my_recycler_view).apply {
+            // use this setting to improve performance if you know that changes
+            // in content do not change the layout size of the RecyclerView
+            setHasFixedSize(true)
+
+            // use a linear layout manager
+            layoutManager = viewManager
+
+            // specify an viewAdapter (see also next example)
+            adapter = viewAdapter
+
+        }
 
         fab.setOnClickListener { view ->
             Snackbar.make(view, "Aproach an NFC TAG", Snackbar.LENGTH_LONG)
@@ -49,6 +164,8 @@ class WriteNFCActivity : AppCompatActivity(), NfcAdapter.CreateNdefMessageCallba
             // Register callback
 
         }
+
+
 
     }
 
